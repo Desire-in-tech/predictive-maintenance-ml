@@ -32,7 +32,7 @@ def test_evaluate_mode_handles_test_split_with_one_class():
         min_recall=0.3,
     )
     assert metrics["roc_auc"] is None
-    assert metrics["average_precision"] == 0.0
+    assert metrics["average_precision"] is None
 
 
 def test_training_rejects_invalid_recall_floor():
