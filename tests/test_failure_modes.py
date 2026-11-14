@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from src.failure_modes import evaluate_mode\nfrom src.evaluation import choose_threshold_with_constraints
+from src.failure_modes import evaluate_mode
+from src.evaluation import choose_threshold_with_constraints
 from src.data_loader import FAILURE_MODES
 
 
