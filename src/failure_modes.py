@@ -92,7 +92,11 @@ def evaluate_mode(y_true, probabilities, threshold, min_recall):
             if has_both_classes
             else None
         ),
-        "average_precision": float(average_precision_score(y_true, probabilities)),
+        "average_precision": (
+            float(average_precision_score(y_true, probabilities))
+            if y_true.sum() > 0
+            else None
+        ),
         "confusion_matrix": {
             "tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)
         },
