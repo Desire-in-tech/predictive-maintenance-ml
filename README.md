@@ -1,5 +1,21 @@
 # Industrial Predictive Maintenance — Task 9
 
+## Live deployment
+
+The project is deployed and available for interactive testing:
+
+| Component | Live URL |
+|---|---|
+| Streamlit prediction dashboard | https://predictive-maintenance-ml-app.streamlit.app/ |
+| FastAPI service | https://predictive-maintenance-api-mhyo.onrender.com |
+| API liveness | https://predictive-maintenance-api-mhyo.onrender.com/health |
+| API readiness (checks that both model artifacts loaded) | https://predictive-maintenance-api-mhyo.onrender.com/ready |
+| Interactive API documentation | https://predictive-maintenance-api-mhyo.onrender.com/docs |
+| Hugging Face model artifacts | https://huggingface.co/Desire-dev/predictive-maintenance |
+
+The Streamlit dashboard sends JSON and CSV requests to the deployed FastAPI service. The API downloads the two model artifacts from the public Hugging Face repository using the immutable model revision configured in the deployment. The frontend does not host model files or run inference itself.
+
+
 A reproducible machine-learning project using the **UCI AI4I 2020 Predictive Maintenance** dataset. It predicts overall machine failure and independently predicts the five annotated failure modes, with explicit attention to costly false alarms.
 
 ## Project scope
@@ -185,7 +201,7 @@ GitHub Actions runs the Python test suite and builds the Docker image on pushes 
 
 The repository includes render.yaml for a Docker-based Render web service. The Render Blueprint pins HF_MODEL_REVISION to the verified immutable model commit `a0735888cd3bbd8c47abc012521d54c89ed5f53b`. If configuring the service manually, use that exact value. The service's readiness check uses /ready, so it will not be considered ready until both model files have downloaded and loaded. No Hugging Face token is required for the public model repository.
 
-The service is not deployed automatically by this repository change. Review the pull request and configure the model revision before deployment.
+The FastAPI service is currently deployed at https://predictive-maintenance-api-mhyo.onrender.com. Its `/health` endpoint reports process liveness, `/ready` confirms model initialization, and `/docs` provides interactive API documentation. The live service uses the pinned Hugging Face model revision shown above.
 
 
 
@@ -229,4 +245,4 @@ Set `API_BASE_URL` to the base URL of the deployed API when the frontend is host
 
 The Streamlit dependencies are isolated in `frontend/requirements.txt`. Deploying the UI does not deploy or change the API. The API must already be reachable over HTTPS for a hosted frontend to use it. No model artifacts or Hugging Face credentials are needed by the Streamlit app.
 
-The frontend is not deployed automatically by this repository change. Review and merge the frontend pull request first, deploy the FastAPI service when approved, and then configure the Streamlit app with its API URL.
+The frontend is currently deployed on Streamlit Community Cloud at https://predictive-maintenance-ml-app.streamlit.app/. Its `API_BASE_URL` setting points to the deployed FastAPI service at https://predictive-maintenance-api-mhyo.onrender.com. The live dashboard supports JSON batch predictions, CSV uploads, and API readiness checks.
