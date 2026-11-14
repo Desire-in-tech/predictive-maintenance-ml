@@ -8,6 +8,6 @@ services:
       - key: HF_REPO_ID
         value: Desire-dev/predictive-maintenance
       - key: HF_MODEL_REVISION
-        sync: false
+        value: a0735888cd3bbd8c47abc012521d54c89ed5f53b
       - key: MODEL_ARTIFACT_DIR
         value: /tmp/predictive-maintenance
