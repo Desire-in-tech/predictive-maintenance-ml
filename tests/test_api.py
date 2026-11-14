@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -52,7 +54,6 @@ def test_json_prediction(client):
     "payload",
     [
         {"readings": [{**valid_reading(), "Torque [Nm]": "42.8"}]},
-        {"readings": [{**valid_reading(), "Torque [Nm]": float("nan")}]},
         {"readings": [{**valid_reading(), "Type": "X"}]},
         {"readings": [{**valid_reading(), "unknown": 1}]},
         {"readings": [{key: value for key, value in valid_reading().items() if key != "Type"}]},
@@ -61,6 +62,18 @@ def test_json_prediction(client):
 )
 def test_invalid_json_inputs_return_400(client, payload):
     assert client.post("/predict", json=payload).status_code == 400
+
+
+def test_non_finite_json_number_returns_400(client):
+    payload = {"readings": [{**valid_reading(), "Torque [Nm]": float("nan")}]}
+    # Send NaN as raw JSON: the HTTP client's strict JSON encoder correctly
+    # refuses it before it can reach the API when using the json= argument.
+    response = client.post(
+        "/predict",
+        content=json.dumps(payload, allow_nan=True),
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 400
 
 
 def test_malformed_json_returns_400(client):
