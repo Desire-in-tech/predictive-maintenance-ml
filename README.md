@@ -186,3 +186,47 @@ GitHub Actions runs the Python test suite and builds the Docker image on pushes 
 The repository includes render.yaml for a Docker-based Render web service. The Render Blueprint pins HF_MODEL_REVISION to the verified immutable model commit `a0735888cd3bbd8c47abc012521d54c89ed5f53b`. If configuring the service manually, use that exact value. The service's readiness check uses /ready, so it will not be considered ready until both model files have downloaded and loaded. No Hugging Face token is required for the public model repository.
 
 The service is not deployed automatically by this repository change. Review the pull request and configure the model revision before deployment.
+
+
+
+---
+
+# Task 10 bonus — Streamlit frontend
+
+A lightweight Streamlit interface is provided in `frontend/app.py`. It is a client of the FastAPI service; it does not load model files or duplicate model inference.
+
+## Frontend features
+
+- Submit one or more sensor readings as a JSON batch.
+- Upload a CSV file using the same six-column schema as `POST /predict/csv`.
+- View overall machine-failure probabilities, decisions and thresholds.
+- View each failure mode's probability, decision, threshold and alert-eligibility status.
+- Check API liveness and readiness from the sidebar.
+- Inspect the raw API response when needed.
+
+## Run the frontend locally
+
+Start the FastAPI service separately, then in another terminal:
+
+    pip install -r frontend/requirements.txt
+    API_BASE_URL=http://localhost:8000 streamlit run frontend/app.py
+
+PowerShell:
+
+    pip install -r frontend/requirements.txt
+    $env:API_BASE_URL = "http://localhost:8000"
+    streamlit run frontend/app.py
+
+Set `API_BASE_URL` to the base URL of the deployed API when the frontend is hosted separately. The frontend makes requests to `/health`, `/ready`, `/predict` and `/predict/csv`.
+
+## Deploy on Streamlit Community Cloud
+
+1. Create a new app connected to this GitHub repository.
+2. Select the `main` branch after the frontend PR is merged.
+3. Set the app file path to `frontend/app.py`.
+4. In the app's settings, add the environment variable `API_BASE_URL` with the HTTPS URL of the deployed FastAPI service.
+5. Deploy the app.
+
+The Streamlit dependencies are isolated in `frontend/requirements.txt`. Deploying the UI does not deploy or change the API. The API must already be reachable over HTTPS for a hosted frontend to use it. No model artifacts or Hugging Face credentials are needed by the Streamlit app.
+
+The frontend is not deployed automatically by this repository change. Review and merge the frontend pull request first, deploy the FastAPI service when approved, and then configure the Streamlit app with its API URL.
