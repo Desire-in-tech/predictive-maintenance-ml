@@ -196,7 +196,8 @@ def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
                 "features": FEATURES,
                 "failure_modes": FAILURE_MODES,
                 "thresholds": thresholds,
-                "min_validation_recall": min_recall,\n                "max_validation_fdr": max_fdr,
+                "min_validation_recall": min_recall,
+                "max_validation_fdr": max_fdr,
             },
             indent=2,
         )
