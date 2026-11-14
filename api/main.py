@@ -32,6 +32,15 @@ MAX_CSV_BYTES = 5 * 1024 * 1024
 MAX_BATCH_SIZE = 5000
 
 
+def _safe_validation_errors(errors):
+    """Return JSON-safe validation details without echoing rejected input values."""
+    sanitized = [
+        {key: value for key, value in error.items() if key != "input"}
+        for error in errors
+    ]
+    return jsonable_encoder(sanitized)
+
+
 def load_model():
     """Download both model files from one explicitly configured Hub revision."""
     from huggingface_hub import hf_hub_download
@@ -91,7 +100,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """The task specification requires HTTP 400 for invalid/malformed inputs."""
     return JSONResponse(
         status_code=400,
-        content={"detail": "Invalid request", "errors": jsonable_encoder(exc.errors())},
+        content={"detail": "Invalid request", "errors": _safe_validation_errors(exc.errors())},
     )
 
 
@@ -186,7 +195,7 @@ async def predict_csv(request: Request, file: UploadFile = File(...)):
             status_code=400,
             detail={
                 "message": "CSV contains invalid sensor values.",
-                "errors": jsonable_encoder(exc.errors()),
+                "errors": _safe_validation_errors(exc.errors()),
             },
         ) from exc
 
