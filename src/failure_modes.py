@@ -21,7 +21,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.data_loader import FEATURES, FAILURE_MODES, TARGET, load_ai4i
-from src.evaluation import choose_threshold, false_discovery_rate
+from src.evaluation import choose_threshold_with_constraints, false_discovery_rate
 
 
 def make_mode_pipeline():
@@ -104,7 +104,7 @@ def evaluate_mode(y_true, probabilities, threshold, min_recall):
     }
 
 
-def train_failure_modes(output_dir="artifacts", min_recall=0.30):
+def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
     """Fit five mode-specific models and tune each threshold on validation data."""
     if not 0 < min_recall <= 1:
         raise ValueError("min_recall must be in the interval (0, 1].")
@@ -146,29 +146,32 @@ def train_failure_modes(output_dir="artifacts", min_recall=0.30):
 
         validation_model = make_mode_pipeline().fit(X_fit, y_fit)
         validation_probabilities = validation_model.predict_proba(X_val)[:, 1]
-        threshold = choose_threshold(
-            y_val.to_numpy(), validation_probabilities, min_recall=min_recall
-        )
-        validation_recall = recall_score(
-            y_val,
-            (validation_probabilities >= threshold).astype(int),
-            zero_division=0,
+        threshold, selection = choose_threshold_with_constraints(
+            y_val.to_numpy(),
+            validation_probabilities,
+            min_recall=min_recall,
+            max_fdr=max_fdr,
         )
 
         test_probabilities = validation_model.predict_proba(X_test)[:, 1]
+        # Unavailable modes remain score-only; they do not emit alerts.
         mode_metrics = evaluate_mode(
-            y_test, test_probabilities, threshold, min_recall
+            y_test,
+            test_probabilities,
+            threshold if threshold is not None else 1.01,
+            min_recall,
         )
-        mode_metrics["validation_recall"] = float(validation_recall)
-        mode_metrics["validation_recall_floor_met"] = bool(
-            validation_recall >= min_recall
-        )
+        mode_metrics["threshold"] = threshold
+        mode_metrics["status"] = selection["status"]
+        mode_metrics["available_for_alerting"] = threshold is not None
+        mode_metrics["max_validation_fdr"] = float(max_fdr)
+        mode_metrics.update(selection)
 
         # Freeze the validation-selected threshold, then refit the model on
         # all non-test observations for the exported inference artifact.
         final_model = make_mode_pipeline().fit(X_train, y.loc[X_train.index])
         models[mode] = final_model
-        thresholds[mode] = float(threshold)
+        thresholds[mode] = float(threshold) if threshold is not None else None
         metrics[mode] = mode_metrics
 
     artifact = {
@@ -193,7 +196,7 @@ def train_failure_modes(output_dir="artifacts", min_recall=0.30):
                 "features": FEATURES,
                 "failure_modes": FAILURE_MODES,
                 "thresholds": thresholds,
-                "min_validation_recall": min_recall,
+                "min_validation_recall": min_recall,\n                "max_validation_fdr": max_fdr,
             },
             indent=2,
         )
