@@ -31,7 +31,7 @@ These indicators are **multi-label**, not five mutually exclusive classes. A row
 
 FDR is defined as `FP / (TP + FP)`: the proportion of positive alerts that are false. Threshold selection uses validation predictions only and minimizes FDR while respecting a recall floor (0.50 for the overall model; 0.30 by default for each rarer failure mode). The untouched test split is used only for final evaluation.
 
-The recall floor is an explicit operating trade-off, not a claim that missed failures are harmless. Review FDR, precision, recall, confusion matrices and per-mode support together before using predictions operationally. Threshold selection falls back to an F1-based threshold if no candidate satisfies the requested recall floor; the report records whether the validation recall floor was met.
+The recall floor is an explicit operating trade-off, not a claim that missed failures are harmless. Review FDR, precision, recall, confusion matrices and per-mode support together before using predictions operationally. For the five failure-mode models, a mode is enabled for alerting only when a validation threshold satisfies both the recall floor and a maximum FDR of 0.50. If no threshold meets both constraints, the mode is marked unavailable for alerting (its probability score remains available) rather than silently falling back to an all-positive or F1-only threshold. The overall binary model retains its existing threshold-selection behavior.
 
 ## Run in Google Colab
 
