@@ -19,7 +19,7 @@ def test_sensor_failure_correlations_ranks_each_sensor_for_each_outcome():
     )
     result = sensor_failure_correlations(frame)
     assert set(result["outcome"]) == {TARGET, *FAILURE_MODES}
-    assert len(result) == 6 * (1 + len(FAILURE_MODES))
+    assert len(result) == 5 * (1 + len(FAILURE_MODES))
     assert result.groupby("outcome").size().eq(5).all()
     assert "spearman_correlation" in result.columns
 
