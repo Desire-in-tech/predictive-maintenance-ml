@@ -210,8 +210,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", default="artifacts")
     parser.add_argument("--min-recall", type=float, default=0.30)
+    parser.add_argument("--max-fdr", type=float, default=0.50)
     args = parser.parse_args()
-    train_failure_modes(args.output_dir, args.min_recall)
+    train_failure_modes(args.output_dir, args.min_recall, args.max_fdr)
 
 
 if __name__ == "__main__":
