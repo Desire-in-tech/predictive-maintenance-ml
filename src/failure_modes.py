@@ -104,6 +104,15 @@ def evaluate_mode(y_true, probabilities, threshold, min_recall):
     }
 
 
+def mode_meets_operating_constraints(selection, test_metrics, min_recall, max_fdr):
+    """Gate alerting on validation selection and untouched test performance."""
+    return bool(
+        selection.get("status") == "enabled"
+        and test_metrics["recall"] >= min_recall
+        and test_metrics["false_discovery_rate"] <= max_fdr
+    )
+
+
 def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
     """Fit five mode-specific models and tune each threshold on validation data."""
     if not 0 < min_recall <= 1:
@@ -161,17 +170,55 @@ def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
             threshold if threshold is not None else 1.01,
             min_recall,
         )
-        mode_metrics["threshold"] = threshold
-        mode_metrics["status"] = selection["status"]
-        mode_metrics["available_for_alerting"] = threshold is not None
+        validation_threshold = threshold
+        available_for_alerting = mode_meets_operating_constraints(
+            selection, mode_metrics, min_recall, max_fdr
+        )
+        deployment_threshold = (
+            validation_threshold if available_for_alerting else None
+        )
+        mode_metrics["validation_threshold"] = validation_threshold
+        mode_metrics["threshold"] = deployment_threshold
+        mode_metrics["status"] = (
+            "enabled"
+            if available_for_alerting
+            else (
+                "unavailable_no_validation_threshold"
+                if validation_threshold is None
+                else "unavailable_test_constraints_not_met"
+            )
+        )
+        mode_metrics["available_for_alerting"] = available_for_alerting
         mode_metrics["max_validation_fdr"] = float(max_fdr)
+        mode_metrics["max_test_fdr"] = float(max_fdr)
+        mode_metrics["test_recall_floor_met"] = bool(
+            mode_metrics["recall"] >= min_recall
+        )
+        mode_metrics["test_fdr_ceiling_met"] = bool(
+            mode_metrics["false_discovery_rate"] <= max_fdr
+        )
+        mode_metrics["test_operating_constraints_met"] = (
+            mode_metrics["test_recall_floor_met"]
+            and mode_metrics["test_fdr_ceiling_met"]
+        )
         mode_metrics.update(selection)
+        # Restore deployment-facing status after adding validation diagnostics.
+        mode_metrics["status"] = (
+            "enabled"
+            if available_for_alerting
+            else (
+                "unavailable_no_validation_threshold"
+                if validation_threshold is None
+                else "unavailable_test_constraints_not_met"
+            )
+        )
 
         # Freeze the validation-selected threshold, then refit the model on
-        # all non-test observations for the exported inference artifact.
+        # all non-test observations for the exported inference artifact. The
+        # untouched test set is used only as a final release-readiness gate.
         final_model = make_mode_pipeline().fit(X_train, y.loc[X_train.index])
         models[mode] = final_model
-        thresholds[mode] = float(threshold) if threshold is not None else None
+        thresholds[mode] = (\n            float(deployment_threshold)\n            if deployment_threshold is not None\n            else None\n        )
         metrics[mode] = mode_metrics
 
     artifact = {
