@@ -1,7 +1,8 @@
 """Strict request and response schemas for predictive-maintenance inference."""
+import math
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, field_validator
 
 
 class SensorReading(BaseModel):
@@ -15,6 +16,19 @@ class SensorReading(BaseModel):
     rotational_speed: StrictInt | StrictFloat = Field(alias="Rotational speed [rpm]")
     torque: StrictInt | StrictFloat = Field(alias="Torque [Nm]")
     tool_wear: StrictInt | StrictFloat = Field(alias="Tool wear [min]")
+
+    @field_validator(
+        "air_temperature",
+        "process_temperature",
+        "rotational_speed",
+        "torque",
+        "tool_wear",
+    )
+    @classmethod
+    def require_finite_sensor_value(cls, value):
+        if not math.isfinite(value):
+            raise ValueError("Sensor values must be finite numbers.")
+        return value
 
 
 class PredictionRequest(BaseModel):
