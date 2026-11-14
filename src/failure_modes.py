@@ -218,7 +218,11 @@ def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
         # untouched test set is used only as a final release-readiness gate.
         final_model = make_mode_pipeline().fit(X_train, y.loc[X_train.index])
         models[mode] = final_model
-        thresholds[mode] = (\n            float(deployment_threshold)\n            if deployment_threshold is not None\n            else None\n        )
+        thresholds[mode] = (
+            float(deployment_threshold)
+            if deployment_threshold is not None
+            else None
+        )
         metrics[mode] = mode_metrics
 
     artifact = {
