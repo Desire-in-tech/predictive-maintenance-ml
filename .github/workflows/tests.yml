@@ -1,7 +1,7 @@
-name: Python tests
+name: Python tests and Docker build
 on:
   push:
-    branches: ["main", "task-09/**"]
+    branches: ["main", "task-09/**", "task-10/**"]
   pull_request:
     branches: ["main"]
 jobs:
@@ -15,3 +15,13 @@ jobs:
           cache: "pip"
       - run: pip install -r requirements.txt
       - run: PYTHONPATH=. pytest -q
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: predictive-maintenance-api:ci
