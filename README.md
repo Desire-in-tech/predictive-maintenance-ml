@@ -100,3 +100,89 @@ A Time-to-Failure / Remaining Useful Life regression model is not claimed. The A
 ## Dataset
 
 UCI Machine Learning Repository — [AI4I 2020 Predictive Maintenance Dataset](https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset).
+
+
+---
+
+# Task 10 — Containerized inference API
+
+Task 10 packages the Task 9 models behind a FastAPI service. The service downloads both Joblib artifacts from the public Hugging Face model repository at startup; model binaries and datasets remain outside Git.
+
+## API capabilities
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | /health | Process liveness |
+| GET | /ready | Model-artifact readiness |
+| POST | /predict | JSON batch inference |
+| POST | /predict/csv | CSV upload and batch inference |
+| GET | /docs | Interactive OpenAPI documentation |
+
+Both prediction endpoints return the overall failure probability/decision and the five independent failure-mode probabilities/decisions from Task 9. A failure mode whose validation-selected threshold was unavailable remains score-only and does not generate an alert.
+
+### JSON request
+
+Example body:
+
+    {
+      "readings": [{
+        "Type": "M",
+        "Air temperature [K]": 298.1,
+        "Process temperature [K]": 308.6,
+        "Rotational speed [rpm]": 1551,
+        "Torque [Nm]": 42.8,
+        "Tool wear [min]": 0
+      }]
+    }
+
+The JSON body contains a readings array with 1–5,000 observations. Each observation must contain exactly the six sensor fields shown above. Type must be L, M or H. Sensor values must be JSON numbers (not numeric strings); extra or missing fields are rejected. Invalid request bodies and Pydantic validation failures return HTTP 400. If model artifacts cannot be loaded, prediction endpoints return HTTP 503 while /health remains available and /ready reports the initialization problem.
+
+### CSV request
+
+Upload a CSV file to POST /predict/csv using multipart form-data with the field name file. The header must contain exactly these six columns:
+
+    Type,Air temperature [K],Process temperature [K],Rotational speed [rpm],Torque [Nm],Tool wear [min]
+
+CSV numeric columns are parsed as numbers and validated before inference. Uploads are limited to 5 MiB and 5,000 rows. Invalid CSV files return HTTP 400.
+
+## Run locally
+
+Python 3.11 is recommended.
+
+    python -m venv .venv
+    pip install -r requirements.txt
+
+Set the Hugging Face model repository and an immutable commit SHA from the model repository's revision history. The verified Task 9 artifacts are pinned to `a0735888cd3bbd8c47abc012521d54c89ed5f53b`; do not replace it with `main` for a reproducible deployment.
+
+Linux/macOS:
+
+    export HF_REPO_ID=Desire-dev/predictive-maintenance
+    export HF_MODEL_REVISION=<immutable-hugging-face-commit-sha>
+    uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+PowerShell:
+
+    $env:HF_REPO_ID = "Desire-dev/predictive-maintenance"
+    $env:HF_MODEL_REVISION = "<immutable-hugging-face-commit-sha>"
+    uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+Open http://localhost:8000/docs for interactive API testing. The model repository is public, so runtime downloads do not require a Hugging Face write token. Never place a write token in source code or deployment environment variables.
+
+## Docker
+
+    docker build -t predictive-maintenance-api .
+    docker run --rm -p 8000:8000 -e HF_REPO_ID=Desire-dev/predictive-maintenance -e HF_MODEL_REVISION=<immutable-hugging-face-commit-sha> predictive-maintenance-api
+
+The image runs as a non-root user. Model artifacts are downloaded into the container's temporary/cache directory at startup and are not baked into the image.
+
+## Tests and CI
+
+    PYTHONPATH=. pytest -q
+
+GitHub Actions runs the Python test suite and builds the Docker image on pushes to main, task-09/**, and task-10/**, and on pull requests targeting main. The Postman collection is at postman/Task-10-Predictive-Maintenance.postman_collection.json; set its baseUrl variable to the local or deployed API URL.
+
+## Render deployment configuration
+
+The repository includes render.yaml for a Docker-based Render web service. The Render Blueprint pins HF_MODEL_REVISION to the verified immutable model commit `a0735888cd3bbd8c47abc012521d54c89ed5f53b`. If configuring the service manually, use that exact value. The service's readiness check uses /ready, so it will not be considered ready until both model files have downloaded and loaded. No Hugging Face token is required for the public model repository.
+
+The service is not deployed automatically by this repository change. Review the pull request and configure the model revision before deployment.
