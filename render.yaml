@@ -3,7 +3,7 @@ services:
     name: predictive-maintenance-api
     runtime: docker
     plan: free
-    healthCheckPath: /health
+    healthCheckPath: /ready
     envVars:
       - key: HF_REPO_ID
         value: Desire-dev/predictive-maintenance
