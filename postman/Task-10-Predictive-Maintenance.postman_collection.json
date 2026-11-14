@@ -1,0 +1,63 @@
+{
+  "info": {
+    "name": "Task 10 - Predictive Maintenance API",
+    "description": "Requests for the Dockerized FastAPI service. Set baseUrl to the deployed API or http://localhost:8000.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Readiness",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/ready"
+      }
+    },
+    {
+      "name": "Predict - JSON batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"readings\": [\n    {\n      \"Type\": \"M\",\n      \"Air temperature [K]\": 298.1,\n      \"Process temperature [K]\": 308.6,\n      \"Rotational speed [rpm]\": 1551,\n      \"Torque [Nm]\": 42.8,\n      \"Tool wear [min]\": 0\n    }\n  ]\n}"
+        },
+        "url": "{{baseUrl}}/predict"
+      }
+    },
+    {
+      "name": "Predict - CSV upload",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/predict/csv"
+      }
+    }
+  ]
+}
