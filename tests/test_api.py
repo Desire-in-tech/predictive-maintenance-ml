@@ -52,6 +52,7 @@ def test_json_prediction(client):
     "payload",
     [
         {"readings": [{**valid_reading(), "Torque [Nm]": "42.8"}]},
+        {"readings": [{**valid_reading(), "Torque [Nm]": float("nan")}]},
         {"readings": [{**valid_reading(), "Type": "X"}]},
         {"readings": [{**valid_reading(), "unknown": 1}]},
         {"readings": [{key: value for key, value in valid_reading().items() if key != "Type"}]},
