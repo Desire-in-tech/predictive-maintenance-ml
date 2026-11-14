@@ -6,7 +6,11 @@ import pandas as pd
 import requests
 import streamlit as st
 
-from frontend.utils import validate_api_base_url
+try:
+    from frontend.utils import validate_api_base_url
+except ModuleNotFoundError:
+    # Streamlit Cloud may place frontend/ rather than the repository root on sys.path.
+    from utils import validate_api_base_url
 
 DEFAULT_READING = {
     "Type": "M",
