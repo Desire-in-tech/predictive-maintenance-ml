@@ -46,7 +46,7 @@ def test_training_rejects_invalid_recall_floor():
 def test_threshold_selector_rejects_all_positive_high_fdr_fallback():
     threshold, details = choose_threshold_with_constraints(
         y_true=[0, 0, 0, 1],
-        probabilities=[0.0, 0.0, 0.0, 0.0],
+        probabilities=[0.1, 0.1, 0.1, 0.1],
         min_recall=0.30,
         max_fdr=0.50,
     )
