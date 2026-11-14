@@ -62,12 +62,20 @@ class PredictiveMaintenanceModel:
                 probability = float(
                     artifact["models"][mode].predict_proba(frame.iloc[[index]])[0, 1]
                 )
-                threshold = float(artifact["thresholds"][mode])
-                predicted = bool(probability >= threshold)
+                configured_threshold = artifact["thresholds"][mode]
+                threshold = (
+                    float(configured_threshold)
+                    if configured_threshold is not None
+                    else None
+                )
+                predicted = bool(
+                    threshold is not None and probability >= threshold
+                )
                 mode_predictions[mode] = {
                     "probability": probability,
                     "predicted": predicted,
                     "threshold": threshold,
+                    "available_for_alerting": threshold is not None,
                 }
                 if predicted:
                     predicted_modes.append(mode)
