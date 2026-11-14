@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -21,11 +19,9 @@ class StubModel:
 
 
 @pytest.fixture
-def client():
-    app.state.model = StubModel()
-    app.state.model_error = None
+def client(monkeypatch):
+    monkeypatch.setattr("api.main.load_model", lambda: StubModel())
     with TestClient(app) as test_client:
-        app.state.model = StubModel()
         yield test_client
 
 
@@ -112,10 +108,7 @@ def test_csv_wrong_numeric_type_returns_400(client):
     assert response.status_code == 400
 
 
-def test_unready_model_returns_503():
+def test_unready_model_returns_503(client):
     app.state.model = None
-    app.state.model_error = "test initialization failure"
-    with TestClient(app) as test_client:
-        app.state.model = None
-        response = test_client.post("/predict", json={"readings": [valid_reading()]})
-        assert response.status_code == 503
+    response = client.post("/predict", json={"readings": [valid_reading()]})
+    assert response.status_code == 503
