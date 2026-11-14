@@ -104,13 +104,9 @@ def evaluate_mode(y_true, probabilities, threshold, min_recall):
     }
 
 
-def mode_meets_operating_constraints(selection, test_metrics, min_recall, max_fdr):
-    """Gate alerting on validation selection and untouched test performance."""
-    return bool(
-        selection.get("status") == "enabled"
-        and test_metrics["recall"] >= min_recall
-        and test_metrics["false_discovery_rate"] <= max_fdr
-    )
+def mode_is_available_for_alerting(selection):
+    """Determine alerting eligibility from validation diagnostics only."""
+    return selection.get("status") == "enabled"
 
 
 def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
@@ -171,9 +167,9 @@ def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
             min_recall,
         )
         validation_threshold = threshold
-        available_for_alerting = mode_meets_operating_constraints(
-            selection, mode_metrics, min_recall, max_fdr
-        )
+        # Alerting eligibility is determined exclusively on validation data.
+        # The held-out test split is used only to report final metrics.
+        available_for_alerting = mode_is_available_for_alerting(selection)
         deployment_threshold = (
             validation_threshold if available_for_alerting else None
         )

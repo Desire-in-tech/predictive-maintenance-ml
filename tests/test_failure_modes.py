@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.failure_modes import evaluate_mode, mode_meets_operating_constraints
+from src.failure_modes import evaluate_mode, mode_is_available_for_alerting
 from src.evaluation import choose_threshold_with_constraints
 from src.data_loader import FAILURE_MODES
 
@@ -77,24 +77,11 @@ def test_threshold_selector_rejects_invalid_fdr_ceiling():
 
 
 
-def test_alerting_gate_requires_validation_and_test_constraints():
-    passing_selection = {"status": "enabled"}
-    passing_test = {"recall": 0.5, "false_discovery_rate": 0.2}
-    failing_test_fdr = {"recall": 0.8, "false_discovery_rate": 0.8}
-    failing_test_recall = {"recall": 0.1, "false_discovery_rate": 0.0}
-
-    assert mode_meets_operating_constraints(
-        passing_selection, passing_test, min_recall=0.3, max_fdr=0.5
+def test_alerting_eligibility_depends_only_on_validation_selection():
+    assert mode_is_available_for_alerting({"status": "enabled"})
+    assert not mode_is_available_for_alerting(
+        {"status": "unavailable_no_threshold_meets_constraints"}
     )
-    assert not mode_meets_operating_constraints(
-        passing_selection, failing_test_fdr, min_recall=0.3, max_fdr=0.5
-    )
-    assert not mode_meets_operating_constraints(
-        passing_selection, failing_test_recall, min_recall=0.3, max_fdr=0.5
-    )
-    assert not mode_meets_operating_constraints(
-        {"status": "unavailable_no_threshold_meets_constraints"},
-        passing_test,
-        min_recall=0.3,
-        max_fdr=0.5,
+    assert not mode_is_available_for_alerting(
+        {"status": "unavailable_no_positive_validation_examples"}
     )
