@@ -218,3 +218,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local datasets, model outputs and secrets
+data/
+artifacts/
+*.joblib
+*.pkl
+*.pt
+.env

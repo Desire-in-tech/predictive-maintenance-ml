@@ -1,0 +1,1 @@
+"""Industrial predictive maintenance project."""
