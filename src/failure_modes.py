@@ -176,12 +176,8 @@ def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
         mode_metrics["validation_threshold"] = validation_threshold
         mode_metrics["threshold"] = deployment_threshold
         mode_metrics["status"] = (
-            "enabled"
-            if available_for_alerting
-            else (
-                "unavailable_no_validation_threshold"
-                if validation_threshold is None
-            )
+            "enabled" if available_for_alerting
+            else "unavailable_no_validation_threshold"
         )
         mode_metrics["available_for_alerting"] = available_for_alerting
         mode_metrics["max_validation_fdr"] = float(max_fdr)
@@ -199,12 +195,8 @@ def train_failure_modes(output_dir="artifacts", min_recall=0.30, max_fdr=0.50):
         mode_metrics.update(selection)
         # Restore deployment-facing status after adding validation diagnostics.
         mode_metrics["status"] = (
-            "enabled"
-            if available_for_alerting
-            else (
-                "unavailable_no_validation_threshold"
-                if validation_threshold is None
-            )
+            "enabled" if available_for_alerting
+            else "unavailable_no_validation_threshold"
         )
 
         # Keep the exact estimator used for validation threshold selection
