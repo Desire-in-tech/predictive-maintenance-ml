@@ -88,3 +88,32 @@ def test_enhanced_inference_requires_mode_artifact(monkeypatch):
         assert "failure_modes_artifact_path" in str(exc)
     else:
         raise AssertionError("Expected a RuntimeError when mode artifact is absent")
+
+
+
+def test_unavailable_failure_mode_does_not_emit_alert(monkeypatch):
+    features = ["Type"]
+    artifact = {
+        "pipeline": FakePipeline(0.1),
+        "threshold": 0.5,
+        "features": features,
+    }
+    modes = {
+        "models": {"RNF": FakePipeline(0.99)},
+        "thresholds": {"RNF": None},
+        "failure_modes": ["RNF"],
+    }
+    monkeypatch.setattr(
+        predict_module.joblib,
+        "load",
+        lambda path: artifact if path == "binary.joblib" else modes,
+    )
+    model = predict_module.PredictiveMaintenanceModel(
+        "binary.joblib", failure_modes_artifact_path="modes.joblib"
+    )
+    result = model.predict_with_failure_modes([{"Type": "M"}])[0]
+    assert result["failure_modes"]["RNF"]["probability"] == 0.99
+    assert result["failure_modes"]["RNF"]["threshold"] is None
+    assert result["failure_modes"]["RNF"]["available_for_alerting"] is False
+    assert result["failure_modes"]["RNF"]["predicted"] is False
+    assert result["predicted_failure_modes"] == []
