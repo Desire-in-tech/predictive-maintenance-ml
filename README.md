@@ -152,7 +152,7 @@ Python 3.11 is recommended.
     python -m venv .venv
     pip install -r requirements.txt
 
-Set the Hugging Face model repository and an immutable commit SHA from the model repository's revision history. Do not use main for a reproducible deployment.
+Set the Hugging Face model repository and an immutable commit SHA from the model repository's revision history. The verified Task 9 artifacts are pinned to `a0735888cd3bbd8c47abc012521d54c89ed5f53b`; do not replace it with `main` for a reproducible deployment.
 
 Linux/macOS:
 
@@ -183,6 +183,6 @@ GitHub Actions runs the Python test suite and builds the Docker image on pushes 
 
 ## Render deployment configuration
 
-The repository includes render.yaml for a Docker-based Render web service. Before creating the service, configure HF_MODEL_REVISION in the Render environment using the immutable commit SHA of the uploaded model artifacts. The service's readiness check uses /ready, so it will not be considered ready until both model files have downloaded and loaded. No Hugging Face token is required for the public model repository.
+The repository includes render.yaml for a Docker-based Render web service. The Render Blueprint pins HF_MODEL_REVISION to the verified immutable model commit `a0735888cd3bbd8c47abc012521d54c89ed5f53b`. If configuring the service manually, use that exact value. The service's readiness check uses /ready, so it will not be considered ready until both model files have downloaded and loaded. No Hugging Face token is required for the public model repository.
 
 The service is not deployed automatically by this repository change. Review the pull request and configure the model revision before deployment.
