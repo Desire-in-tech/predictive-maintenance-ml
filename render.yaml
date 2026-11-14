@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: predictive-maintenance-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: HF_REPO_ID
+        value: Desire-dev/predictive-maintenance
+      - key: HF_MODEL_REVISION
+        sync: false
+      - key: MODEL_ARTIFACT_DIR
+        value: /tmp/predictive-maintenance
